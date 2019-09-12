@@ -49,7 +49,7 @@ def get_tweets(query, since, until, count = 10):
   
 def main(): 
     # calling function to get tweets 
-    tweets = get_tweets(query = 'wendys spicy nuggets', since = "2019-05-01", until = "2019-08-19", count = 5000)
+    tweets = get_tweets(query = 'wendys spicy nuggets', since = "2019-05-01", until = "2019-08-19", count = 1000)
     print("----Announcement to reveal----")
     # picking positive tweets from tweets 
     ptweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive'] 
@@ -62,8 +62,18 @@ def main():
     # percentage of neutral tweets 
     print("Neutral tweets percentage: {} %".format(100*(len(tweets) - len(ntweets) - len(ptweets))/len(tweets))) 
     
+    # printing first 5 positive tweets 
+    print("\n\nPositive tweets:") 
+    for tweet in ptweets[:10]: 
+        print(tweet['text']) 
+  
+    # printing first 5 negative tweets 
+    print("\n\nNegative tweets:") 
+    for tweet in ntweets[:10]: 
+        print(tweet['text'])
+
     # calling function to get tweets 
-    tweets = get_tweets(query = 'wendys spicy nuggets', since = "2019-08-20", until = "2019-09-09", count = 5000)
+    tweets = get_tweets(query = 'wendys spicy nuggets', since = "2019-08-20", until = "2019-09-09", count = 1000)
     print("----Reveal to current----")
     # picking positive tweets from tweets 
     ptweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive'] 
@@ -75,7 +85,17 @@ def main():
     print("Negative tweets percentage: {} %".format(100*len(ntweets)/len(tweets))) 
     # percentage of neutral tweets 
     print("Neutral tweets percentage: {} %".format(100*(len(tweets) - len(ntweets) - len(ptweets))/len(tweets))) 
+    
+    # printing first 5 positive tweets 
+    print("\n\nPositive tweets:") 
+    for tweet in ptweets[:10]: 
+        print(tweet['text']) 
   
+    # printing first 5 negative tweets 
+    print("\n\nNegative tweets:") 
+    for tweet in ntweets[:10]: 
+        print(tweet['text'])
+
 if __name__ == "__main__": 
     # calling main function 
     main() 
