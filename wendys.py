@@ -1,6 +1,24 @@
 import re
 import got
-from textblob import TextBlob 
+from textblob import TextBlob
+from threading import Thread, Event
+from Queue import Queue
+from datetime import date, timedelta
+
+dates = Queue()
+tweets_w_polarity = Queue()
+
+class Tweet_Worker(Thread):
+    def run(self):
+        while True:
+            
+            # this will return a date in format 2019-00-00
+            key = dates.get()
+
+            tweets_w_polarity.put(get_tweets(query = 'wendys spicy nuggets', since = key, until = key, count = 100))
+
+            dates.task_done()
+
 
 # Scrub tweets of links, special characters and other junk.
 def clean_tweet(tweet): 
@@ -46,10 +64,49 @@ def get_tweets(query, since, until, count = 10):
 
     # return parsed tweets 
     return tweets 
-  
-def main(): 
-    # calling function to get tweets 
-    tweets = get_tweets(query = 'wendys spicy nuggets', since = "2019-05-01", until = "2019-08-19", count = 1000)
+
+def populate_queue_before():
+
+    sdate = date(2019, 5, 4)   # start date
+    edate = date(2019, 8, 19)   # end date
+
+    delta = edate - sdate       # as timedelta
+
+    for i in range(delta.days + 1):
+        day = sdate + timedelta(days=i)
+        dates.put(str(day))
+
+def populate_queue_after():
+
+    sdate = date(2019, 8, 21)   # start date
+    edate = date(2019, 9, 12)   # end date
+
+    delta = edate - sdate       # as timedelta
+
+    for i in range(delta.days + 1):
+        day = sdate + timedelta(days=i)
+        dates.put(str(day))
+
+def main():
+
+    #populate queue with Dates
+    populate_queue_before()
+
+    # Create threads once queue is full
+    for i in range(100):
+        t = Tweet_Worker()
+        t.daemon = True
+        t.start()
+
+    # Wait for threads to finish
+    dates.join()
+
+    # For each tweet array in queue combine to one giant array
+    tweets = []
+    while !tweets_w_polarity.empty():
+        tweets = tweets + tweets_w_polarity.get()
+
+    # Output results
     print("----Announcement to reveal----")
     # picking positive tweets from tweets 
     ptweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive'] 
