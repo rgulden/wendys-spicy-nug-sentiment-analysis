@@ -3,6 +3,7 @@ import got
 from textblob import TextBlob
 from threading import Thread, Event
 from Queue import Queue
+import arrow
 from datetime import date, timedelta
 
 dates = Queue()
@@ -13,9 +14,12 @@ class Tweet_Worker(Thread):
         while True:
             
             # this will return a date in format 2019-00-00
+            # Get day
             key = dates.get()
+            # Get day until (day + 1)
+            day = arrow.get(key, 'YYYY-MM-DD').date() + timedelta(days=1)
 
-            tweets_w_polarity.put(get_tweets(query = 'wendys spicy nuggets', since = key, until = key, count = 100))
+            tweets_w_polarity.put(get_tweets(query = 'wendys spicy nuggets', since = key, until = str(day), count = 100))
 
             dates.task_done()
 
@@ -68,7 +72,7 @@ def get_tweets(query, since, until, count = 10):
 def populate_queue_before():
 
     sdate = date(2019, 5, 4)   # start date
-    edate = date(2019, 8, 19)   # end date
+    edate = date(2019, 8, 17)   # end date
 
     delta = edate - sdate       # as timedelta
 
@@ -79,7 +83,7 @@ def populate_queue_before():
 def populate_queue_after():
 
     sdate = date(2019, 8, 21)   # start date
-    edate = date(2019, 9, 12)   # end date
+    edate = date(2019, 9, 11)   # end date
 
     delta = edate - sdate       # as timedelta
 
@@ -103,7 +107,7 @@ def main():
 
     # For each tweet array in queue combine to one giant array
     tweets = []
-    while !tweets_w_polarity.empty():
+    while not tweets_w_polarity.empty():
         tweets = tweets + tweets_w_polarity.get()
 
     # Output results
@@ -129,8 +133,19 @@ def main():
     for tweet in ntweets[:10]: 
         print(tweet['text'])
 
+    #populate queue with Dates
+    populate_queue_after()
+
+    # Wait for threads to finish
+    dates.join()
+
+    # For each tweet array in queue combine to one giant array
+    tweets = []
+    while not tweets_w_polarity.empty():
+        tweets = tweets + tweets_w_polarity.get()
+
     # calling function to get tweets 
-    tweets = get_tweets(query = 'wendys spicy nuggets', since = "2019-08-20", until = "2019-09-09", count = 1000)
+    tweets = get_tweets(query = 'wendys spicy nuggets', since = "2019-08-20", until = "2019-09-09", count = 100)
     print("----Reveal to current----")
     # picking positive tweets from tweets 
     ptweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive'] 
