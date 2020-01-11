@@ -1,9 +1,9 @@
 import re
 from TweetCriteria import TweetCriteria
-from TweetManager import getTweets
-from TextBlob import TextBlob
+import TweetManager
+from textblob import TextBlob
 from threading import Thread, Event
-from Queue import Queue
+from queue import Queue
 import arrow
 from datetime import date, timedelta
 
@@ -69,7 +69,7 @@ def get_tweets(query, since, until, count=10):
     )
 
     # parsing tweets one by one
-    for tweet in getTweets(tweetCriteria):
+    for tweet in TweetManager.getTweets(tweetCriteria):
         # empty dictionary to store required params of a tweet
         parsed_tweet = {}
 

@@ -1,4 +1,5 @@
-import urllib, urllib2, json, re, datetime, sys, cookielib
+import urllib.parse, urllib.request, http.cookiejar 
+import json, re, datetime, sys
 from pyquery import PyQuery
 from TweetCriteria import TweetCriteria
 
@@ -12,7 +13,7 @@ class TweetManager:
 
         results = []
         resultsAux = []
-        cookieJar = cookielib.CookieJar()
+        cookieJar = http.cookiejar.CookieJar()
 
         if (
             hasattr(tweetCriteria, "username")
@@ -140,7 +141,7 @@ class TweetManager:
             if tweetCriteria.topTweets:
                 url = "https://twitter.com/i/search/timeline?q=%s&src=typd&max_position=%s"
 
-        url = url % (urllib.quote(urlGetData), urllib.quote(refreshCursor))
+        url = url % (urllib.parse.quote(urlGetData), urllib.parse.quote(refreshCursor))
 
         headers = [
             ("Host", "twitter.com"),
@@ -156,19 +157,19 @@ class TweetManager:
         ]
 
         if proxy:
-            opener = urllib2.build_opener(
-                urllib2.ProxyHandler({"http": proxy, "https": proxy}),
-                urllib2.HTTPCookieProcessor(cookieJar),
+            opener = urllib.request.build_opener(
+                urllib.request.ProxyHandler({"http": proxy, "https": proxy}),
+                urllib.request.HTTPCookieProcessor(cookieJar),
             )
         else:
-            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookieJar))
+            opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookieJar))
         opener.addheaders = headers
 
         try:
             response = opener.open(url)
             jsonResponse = response.read()
         except:
-            print("Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd" % urllib.quote(
+            print("Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd" % urllib.parse.quote(
                 urlGetData
             ))
             sys.exit()
