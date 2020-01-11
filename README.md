@@ -11,6 +11,8 @@ This is a demonstration of how to query tweets from older than 7 days and run se
 ## Output Example
 
 ```bash
+python3 wendys.py
+
 ----Announcement to reveal----
 Positive tweets percentage: 21.64486862259927 %
 Negative tweets percentage: 32.26110521974785 %
