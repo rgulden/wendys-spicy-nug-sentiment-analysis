@@ -117,7 +117,7 @@ def main():
 
     # Create threads once queue is full
     for i in range(100):
-        print("-", end = '')
+        print("-", end="")
         t = Tweet_Worker()
         t.daemon = True
         t.start()

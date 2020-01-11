@@ -1,6 +1,7 @@
-import urllib.parse, urllib.request, http.cookiejar 
+import urllib.parse, urllib.request, http.cookiejar
 import json, re, datetime, sys
 from pyquery import PyQuery
+
 
 class TweetManager:
     def __init__(self):
@@ -48,23 +49,15 @@ class TweetManager:
 
         if (
             hasattr(self, "username")
-            and (
-                self.username.startswith("'")
-                or self.username.startswith('"')
-            )
-            and (
-                self.username.endswith("'")
-                or self.username.endswith('"')
-            )
+            and (self.username.startswith("'") or self.username.startswith('"'))
+            and (self.username.endswith("'") or self.username.endswith('"'))
         ):
             self.username = self.username[1:-1]
 
         active = True
 
         while active:
-            json = self.getJsonReponse(
-                refreshCursor, cookieJar, proxy
-            )
+            json = self.getJsonReponse(refreshCursor, cookieJar, proxy)
             if len(json["items_html"].strip()) == 0:
                 break
 
@@ -113,7 +106,7 @@ class TweetManager:
                 geoSpan = tweetPQ("span.Tweet-geo")
                 if len(geoSpan) > 0:
                     geo = geoSpan.attr("title")
-                
+
                 tweet = {
                     "id": id,
                     "permalink": "https://twitter.com" + permalink,
@@ -124,11 +117,15 @@ class TweetManager:
                     "favorites": favorites,
                     "geo": geo,
                     "mentions": "",
-                    "hashtags": ""
+                    "hashtags": "",
                 }
 
-                tweet["mentions"] = " ".join(re.compile("(@\\w*)").findall(tweet["text"]))
-                tweet["hashtags"] = " ".join(re.compile("(#\\w*)").findall(tweet["text"]))
+                tweet["mentions"] = " ".join(
+                    re.compile("(@\\w*)").findall(tweet["text"])
+                )
+                tweet["hashtags"] = " ".join(
+                    re.compile("(#\\w*)").findall(tweet["text"])
+                )
 
                 results.append(tweet)
                 resultsAux.append(tweet)
@@ -137,10 +134,7 @@ class TweetManager:
                     receiveBuffer(resultsAux)
                     resultsAux = []
 
-                if (
-                    self.maxTweets > 0
-                    and len(results) >= self.maxTweets
-                ):
+                if self.maxTweets > 0 and len(results) >= self.maxTweets:
                     active = False
                     break
 
@@ -161,9 +155,7 @@ class TweetManager:
             urlGetData += " " + self.querySearch
 
         if hasattr(self, "near"):
-            urlGetData += (
-                "&near:" + self.near + " within:" + self.within
-            )
+            urlGetData += "&near:" + self.near + " within:" + self.within
 
         if hasattr(self, "since"):
             urlGetData += " since:" + self.since
@@ -196,16 +188,19 @@ class TweetManager:
                 urllib.request.HTTPCookieProcessor(cookieJar),
             )
         else:
-            opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookieJar))
+            opener = urllib.request.build_opener(
+                urllib.request.HTTPCookieProcessor(cookieJar)
+            )
         opener.addheaders = headers
 
         try:
             response = opener.open(url)
             jsonResponse = response.read()
         except:
-            print("Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd" % urllib.parse.quote(
-                urlGetData
-            ))
+            print(
+                "Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd"
+                % urllib.parse.quote(urlGetData)
+            )
             return None
 
         dataJson = json.loads(jsonResponse)
