@@ -1,14 +1,45 @@
 import urllib.parse, urllib.request, http.cookiejar 
 import json, re, datetime, sys
 from pyquery import PyQuery
-from TweetCriteria import TweetCriteria
 
 class TweetManager:
     def __init__(self):
-        pass
+        self.maxTweets = 0
+        self.within = "15mi"
 
-    @staticmethod
-    def getTweets(tweetCriteria, receiveBuffer=None, bufferLength=100, proxy=None):
+    def setUsername(self, username):
+        self.username = username
+        return self
+
+    def setSince(self, since):
+        self.since = since
+        return self
+
+    def setUntil(self, until):
+        self.until = until
+        return self
+
+    def setQuerySearch(self, querySearch):
+        self.querySearch = querySearch
+        return self
+
+    def setMaxTweets(self, maxTweets):
+        self.maxTweets = maxTweets
+        return self
+
+    def setTopTweets(self, topTweets):
+        self.topTweets = topTweets
+        return self
+
+    def setNear(self, near):
+        self.near = near
+        return self
+
+    def setWithin(self, within):
+        self.within = within
+        return self
+
+    def getTweets(self, receiveBuffer=None, bufferLength=100, proxy=None):
         refreshCursor = ""
 
         results = []
@@ -16,23 +47,23 @@ class TweetManager:
         cookieJar = http.cookiejar.CookieJar()
 
         if (
-            hasattr(tweetCriteria, "username")
+            hasattr(self, "username")
             and (
-                tweetCriteria.username.startswith("'")
-                or tweetCriteria.username.startswith('"')
+                self.username.startswith("'")
+                or self.username.startswith('"')
             )
             and (
-                tweetCriteria.username.endswith("'")
-                or tweetCriteria.username.endswith('"')
+                self.username.endswith("'")
+                or self.username.endswith('"')
             )
         ):
-            tweetCriteria.username = tweetCriteria.username[1:-1]
+            self.username = self.username[1:-1]
 
         active = True
 
         while active:
-            json = TweetManager.getJsonReponse(
-                tweetCriteria, refreshCursor, cookieJar, proxy
+            json = self.getJsonReponse(
+                refreshCursor, cookieJar, proxy
             )
             if len(json["items_html"].strip()) == 0:
                 break
@@ -48,7 +79,6 @@ class TweetManager:
 
             for tweetHTML in tweets:
                 tweetPQ = PyQuery(tweetHTML)
-                tweet = TweetCriteria()
 
                 usernameTweet = tweetPQ("span:first.username.u-dir b").text()
                 txt = re.sub(
@@ -83,17 +113,22 @@ class TweetManager:
                 geoSpan = tweetPQ("span.Tweet-geo")
                 if len(geoSpan) > 0:
                     geo = geoSpan.attr("title")
+                
+                tweet = {
+                    "id": id,
+                    "permalink": "https://twitter.com" + permalink,
+                    "username": usernameTweet,
+                    "text": txt,
+                    "date": datetime.datetime.fromtimestamp(dateSec),
+                    "retweets": retweets,
+                    "favorites": favorites,
+                    "geo": geo,
+                    "mentions": "",
+                    "hashtags": ""
+                }
 
-                tweet.id = id
-                tweet.permalink = "https://twitter.com" + permalink
-                tweet.username = usernameTweet
-                tweet.text = txt
-                tweet.date = datetime.datetime.fromtimestamp(dateSec)
-                tweet.retweets = retweets
-                tweet.favorites = favorites
-                tweet.mentions = " ".join(re.compile("(@\\w*)").findall(tweet.text))
-                tweet.hashtags = " ".join(re.compile("(#\\w*)").findall(tweet.text))
-                tweet.geo = geo
+                tweet["mentions"] = " ".join(re.compile("(@\\w*)").findall(tweet["text"]))
+                tweet["hashtags"] = " ".join(re.compile("(#\\w*)").findall(tweet["text"]))
 
                 results.append(tweet)
                 resultsAux.append(tweet)
@@ -103,8 +138,8 @@ class TweetManager:
                     resultsAux = []
 
                 if (
-                    tweetCriteria.maxTweets > 0
-                    and len(results) >= tweetCriteria.maxTweets
+                    self.maxTweets > 0
+                    and len(results) >= self.maxTweets
                 ):
                     active = False
                     break
@@ -114,31 +149,30 @@ class TweetManager:
 
         return results
 
-    @staticmethod
-    def getJsonReponse(tweetCriteria, refreshCursor, cookieJar, proxy):
+    def getJsonReponse(self, refreshCursor, cookieJar, proxy):
         url = "https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&max_position=%s"
 
         urlGetData = ""
 
-        if hasattr(tweetCriteria, "username"):
-            urlGetData += " from:" + tweetCriteria.username
+        if hasattr(self, "username"):
+            urlGetData += " from:" + self.username
 
-        if hasattr(tweetCriteria, "querySearch"):
-            urlGetData += " " + tweetCriteria.querySearch
+        if hasattr(self, "querySearch"):
+            urlGetData += " " + self.querySearch
 
-        if hasattr(tweetCriteria, "near"):
+        if hasattr(self, "near"):
             urlGetData += (
-                "&near:" + tweetCriteria.near + " within:" + tweetCriteria.within
+                "&near:" + self.near + " within:" + self.within
             )
 
-        if hasattr(tweetCriteria, "since"):
-            urlGetData += " since:" + tweetCriteria.since
+        if hasattr(self, "since"):
+            urlGetData += " since:" + self.since
 
-        if hasattr(tweetCriteria, "until"):
-            urlGetData += " until:" + tweetCriteria.until
+        if hasattr(self, "until"):
+            urlGetData += " until:" + self.until
 
-        if hasattr(tweetCriteria, "topTweets"):
-            if tweetCriteria.topTweets:
+        if hasattr(self, "topTweets"):
+            if self.topTweets:
                 url = "https://twitter.com/i/search/timeline?q=%s&src=typd&max_position=%s"
 
         url = url % (urllib.parse.quote(urlGetData), urllib.parse.quote(refreshCursor))
@@ -172,8 +206,7 @@ class TweetManager:
             print("Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd" % urllib.parse.quote(
                 urlGetData
             ))
-            sys.exit()
-            return
+            return None
 
         dataJson = json.loads(jsonResponse)
 

@@ -1,10 +1,8 @@
-import re
-from TweetCriteria import TweetCriteria
-import TweetManager
+import re, arrow
+from TweetManager import TweetManager
 from textblob import TextBlob
 from threading import Thread, Event
 from queue import Queue
-import arrow
 from datetime import date, timedelta
 
 dates = Queue()
@@ -60,26 +58,24 @@ def get_tweets(query, since, until, count=10):
     tweets = []
 
     # call twitter api to fetch tweets
-    tweetCriteria = (
-        TweetCriteria()
-        .setQuerySearch(query)
-        .setSince(since)
-        .setUntil(until)
-        .setMaxTweets(count)
-    )
+    Tweeter = TweetManager()
+    Tweeter.setQuerySearch(query)
+    Tweeter.setSince(since)
+    Tweeter.setUntil(until)
+    Tweeter.setMaxTweets(count)
 
     # parsing tweets one by one
-    for tweet in TweetManager.getTweets(tweetCriteria):
+    for tweet in Tweeter.getTweets():
         # empty dictionary to store required params of a tweet
         parsed_tweet = {}
 
         # saving text of tweet
-        parsed_tweet["text"] = tweet.text
+        parsed_tweet["text"] = tweet["text"]
         # saving sentiment of tweet
-        parsed_tweet["sentiment"] = get_tweet_sentiment(tweet.text)
+        parsed_tweet["sentiment"] = get_tweet_sentiment(tweet["text"])
 
         # appending parsed tweet to tweets list
-        if tweet.retweets > 0:
+        if tweet["retweets"] > 0:
             # if tweet has retweets, ensure that it is appended only once
             if parsed_tweet not in tweets:
                 tweets.append(parsed_tweet)
@@ -121,6 +117,7 @@ def main():
 
     # Create threads once queue is full
     for i in range(100):
+        print("-", end = '')
         t = Tweet_Worker()
         t.daemon = True
         t.start()
